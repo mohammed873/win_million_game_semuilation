@@ -9,7 +9,7 @@ const questionSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  false_choices: {
+  possible_answers: {
     type: [String],
     required: true,
   },

@@ -5,10 +5,20 @@ const participantRouter = require("./routes/participant");
 const groupMember = require("./routes/groupMember");
 const questionRouter = require("./routes/question");
 const questionTokenRouter = require("./routes/questionToken");
+const cors = require("cors");
 
 //middelwares
 const app = express();
 app.use(express.json());
+app.use(function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "*");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, OPTIONS, PUT,PATCH, DELETE"
+  );
+  next();
+});
 
 //connecting to database
 const db = require("./config/config");

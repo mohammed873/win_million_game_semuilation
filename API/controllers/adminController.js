@@ -43,10 +43,14 @@ exports.getAllAdmins = async (req, res) => {
 //adding a new admin
 exports.addAdmin = async (req, res) => {
   const { error } = adminValidations(req.body);
-  if (error) return res.status(500).send(error.details[0].message);
+  if (error) return res.status(500).json({
+    message:error.details[0].message
+  });
 
   const phoneExist = await Admin.findOne({ phone: req.body.phone });
-  if (phoneExist) return res.status(400).send("Phone already exists");
+  if (phoneExist) return res.status(400).json({
+    message:"Phone already exists"
+  });
 
   const salt = await bcrypt.genSalt(10);
   const hashpassword = await bcrypt.hash(req.body.password, salt);
@@ -134,5 +138,8 @@ exports.loginAdmin = async (req, res) => {
   if (!validPass) return res.status(400).send("Phone or password is incorrect");
 
   const token = jwt.sign({ _id: admin._id }, process.env.TOKEN_ADMIN);
-  res.header("auth-token", token).send(token);
+  res.header("auth-token", token).json({
+    message:'you are loged in',
+    token
+  });
 };

@@ -3,33 +3,35 @@ const Round = require("../models/round");
 const Group = require("../models/group_members");
 const Question = require("../models/question");
 const Participant = require("../models/participant");
+const jwt = require("jsonwebtoken");
 
-//add question
+//add answser
 exports.addQuestionToken = async (req, res) => {
-  const {
-    id_question,
-    id_participant,
-    participant_answer,
-    grp_code,
-  } = req.body;
+  const token = req.header("auth-token");
+  const id_participant = jwt.verify(token, process.env.PARTICIPANT_TOKEN_SECRET)
+    ._id;
+
+  const { id_question, participant_answer, group_code } = req.body;
 
   const questionExist = await Round.findOne({
     id_question: id_question,
     is_answered: true,
   });
-  if (questionExist) return res.status(400).send("Too late");
+  if (questionExist)
+    return res.status(400).send("too late , answer has already been saved");
 
   const group_members = await Group.findOne({
     id_participant: id_participant,
-    grp_code: grp_code,
+    group_code: group_code,
   });
 
   const question = await Question.findById(id_question);
   const participant = await Participant.findById(id_participant);
 
-  const roundsCount = await getRoundsCount(grp_code);
+  const roundsCount = await getRoundsCount(group_code);
+  console.log(roundsCount);
 
-  if (roundsCount == 14) {
+  if (roundsCount == 6) {
     await Round.updateMany({ $set: { is_answered: false } });
     res.send("Game over");
   } else {
@@ -80,6 +82,8 @@ async function getRoundsCount(group_code) {
 
   rounds.map((group) => {
     console.log(group);
+    console.log(group_code);
+    console.log(group.group_members[0].group_code);
     if (group.group_members[0].group_code == group_code) i++;
   });
 

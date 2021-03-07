@@ -18,6 +18,9 @@ exports.participRegister = async (req, res, next) => {
   const phoneExist = await Participant.findOne({ phone: req.body.phone });
   if (phoneExist) return res.status(400).send("Phone already exist");
 
+  const emailExist = await Participant.findOne({ email: req.body.email });
+  if (emailExist) return res.status(400).send("Email already exist");
+
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
@@ -25,7 +28,7 @@ exports.participRegister = async (req, res, next) => {
     full_name: req.body.full_name,
     age: req.body.age,
     email: req.body.email,
-    isValid: true,
+    isValid: false,
     online: false,
     phone: req.body.phone,
     password: hashedPassword,
@@ -74,14 +77,14 @@ exports.participValidation = async (req, res) => {
     participant.isValid = req.body.isValid;
     const updatedParticipant = await participant.save();
     sendMail(updatedParticipant.email);
-    sendSms(updatedParticipant.phone);
+    // sendSms(updatedParticipant.phone);
     res.json(updatedParticipant);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 
-//get a single participant
+//get participants
 exports.getParticipants = async (req, res) => {
   try {
     const participants = await Participant.find();

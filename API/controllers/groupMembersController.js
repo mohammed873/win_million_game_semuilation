@@ -2,6 +2,7 @@ const Group = require("../models/group_members");
 const Participant = require("../models/participant");
 const log = require("../controllers/logs/log");
 const logs = require("../models/logs");
+const jwt = require("jsonwebtoken");
 
 //get all groups
 exports.getAllGroups = async (req, res) => {
@@ -33,12 +34,15 @@ exports.getAllGroups = async (req, res) => {
 
 //adding new group
 exports.addGroup = async (req, res) => {
-  const id_participant = req.body.id_participant;
+  const token = req.header("auth-token");
+  const id_participant = jwt.verify(token, process.env.PARTICIPANT_TOKEN_SECRET)
+    ._id;
+
   const participant = await Participant.findOne({ _id: id_participant });
 
   if (participant.isValid) {
     const group = new Group({
-      id_participant: participant._id,
+      id_participant: id_participant,
       group_code: Math.floor(1000 + Math.random() * 9000),
     });
 
@@ -74,16 +78,21 @@ exports.addGroup = async (req, res) => {
       );
     }
   } else {
-    res.send({ error: "Your participation is not valid" });
+    res.send({ error: "Your Acount is not valid , yet" });
   }
 };
 
+//join group
 exports.joinGroup = async (req, res) => {
-  const { group_code, id_participant } = req.body;
+  const token = req.header("auth-token");
+  const id_participant = jwt.verify(token, process.env.PARTICIPANT_TOKEN_SECRET)
+    ._id;
+
+  const { group_code } = req.body;
   const participant = await Participant.findOne({ _id: id_participant });
 
   if (participant.isValid == false) {
-    return res.status(400).send("Your participation is not valid ");
+    return res.status(400).send("Your Acount is not valid , yet");
   }
 
   const groupExist = await Group.findOne({ group_code: group_code });
@@ -94,6 +103,13 @@ exports.joinGroup = async (req, res) => {
       .send("Group dosen't exist, please create group first");
 
   Group.countDocuments({ group_code: group_code }, async (err, counter) => {
+    if (
+      await Group.findOne({
+        id_participant: id_participant,
+        group_code: group_code,
+      })
+    )
+      return res.status(400).send("You are already in the game");
     if (counter < 4) {
       const group = new Group({
         id_participant: id_participant,
@@ -159,5 +175,43 @@ exports.getGroupByCode = async (req, res) => {
     res.send([finalWinner, { message: "you are the winner" }]);
   } catch (error) {
     res.status(500).send({ error: error.message });
+  }
+};
+
+//Getting availaible question
+exports.getAvailaibleGroups = async (req, res) => {
+  try {
+    await Group.find((err, data) => {
+      var code = data.map((inf) => {
+        return inf.group_code;
+      });
+
+      var allcodes = code.filter((a, b) => code.indexOf(a) === b);
+      res.json(allcodes);
+    });
+  } catch (error) {
+    res.send(error.message);
+  }
+};
+
+//getting all group members of one group
+exports.getAllMembers = async (req, res) => {
+  try {
+    const groups = await Group.aggregate([
+      {
+        $match: { group_code: req.body.group_code },
+      },
+      {
+        $lookup: {
+          from: "participants",
+          localField: "id_participant",
+          foreignField: "_id",
+          as: "participant",
+        },
+      },
+    ]);
+    res.send(groups);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
   }
 };

@@ -6,11 +6,15 @@ const {
   addGroup,
   joinGroup,
   getGroupByCode,
+  getAvailaibleGroups,
+  getAllMembers,
 } = require("../controllers/groupMembersController");
 const verifyParticipToken = require("../controllers/validation/tokenParticpation");
 router.get("/", verifyParticipToken, getAllGroups);
 router.post("/", verifyParticipToken, addGroup);
 router.post("/join", verifyParticipToken, joinGroup);
-router.get("/final", getGroupByCode);
+router.post("/final", getGroupByCode);
+router.get("/availaible", getAvailaibleGroups);
+router.post("/groupMembers", getAllMembers);
 
 module.exports = router;

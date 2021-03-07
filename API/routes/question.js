@@ -2,10 +2,10 @@ const router = require("express").Router();
 const {
   questionAdd,
   getAllQuestions,
-  getRandomQuestion,
+  getQuestions,
 } = require("../controllers/questionController");
 const verify = require("../controllers/validation/tokenVerification");
 router.get("/", verify, getAllQuestions);
-router.get("/random", getRandomQuestion);
+router.get("/getQuestion", getQuestions);
 router.post("/", verify, questionAdd);
 module.exports = router;

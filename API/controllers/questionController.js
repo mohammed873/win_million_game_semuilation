@@ -6,7 +6,7 @@ exports.questionAdd = async (req, res) => {
   const question = new Question({
     quest: req.body.quest,
     answer: req.body.answer,
-    false_choices: req.body.false_choices,
+    possible_answers: req.body.possible_answers,
     points: req.body.points,
   });
 
@@ -21,7 +21,7 @@ exports.questionAdd = async (req, res) => {
   }
 };
 
-//get alla question
+//get all question
 exports.getAllQuestions = async (req, res) => {
   try {
     questions = await Question.find();
@@ -31,8 +31,7 @@ exports.getAllQuestions = async (req, res) => {
   }
 };
 
-//get random question
-exports.getRandomQuestion = async (req, res) => {
+async function test(req, res) {
   try {
     Question.countDocuments((err, count) => {
       var random = Math.floor(Math.random() * count);
@@ -44,20 +43,29 @@ exports.getRandomQuestion = async (req, res) => {
             id_question: result._id,
             is_answered: true,
           });
-
           if (checkQuest) {
-            res.send(
-              " pick up another one !,Question has been already answered."
-            );
+            test(req, res);
           } else {
-            res.json([
-              result,
-              { message: "/question/add to submit your answer" },
-            ]);
+            res.send(result);
           }
         });
     });
   } catch (error) {
     res.status(500).send({ error: error.message });
+  }
+}
+
+//get random question
+exports.getRandomQuestion = async (req, res) => {
+  test(req, res);
+};
+
+
+exports.getQuestions = async (req, res) => {
+  try {
+    questions = await Question.find().limit(7);
+    res.json(questions);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
   }
 };
